@@ -10,7 +10,8 @@ static int
 TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un, int *Ufailure) {
   fftw_complex *in, *out;
   fftw_plan p;
-  hpcc_fftw_plan ip;
+  //hpcc_fftw_plan ip;
+  fftw_plan ip;
   double Gflops = -1.0;
   double maxErr, tmp1, tmp2, tmp3, t0, t1, t2, t3;
   int i, n, flags, failure = 1;
@@ -59,25 +60,30 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
 #endif
 
   t1 = -MPI_Wtime();
-  p = fftw_create_plan( n, FFTW_FORWARD, flags );
+  //p = fftw_create_plan( n, FFTW_FORWARD, flags );
+  p = fftw_plan_dft_1d( n, in, out, FFTW_FORWARD, flags );
   t1 += MPI_Wtime();
 
   if (! p) goto comp_end;
 
   t2 = -MPI_Wtime();
-  fftw_one( p, in, out );
+  //fftw_one( p, in, out );
+  fftw_execute(p);
   t2 += MPI_Wtime();
 
   fftw_destroy_plan(p);
 
-  ip = HPCC_fftw_create_plan( n, FFTW_BACKWARD, FFTW_ESTIMATE );
+  //ip = HPCC_fftw_create_plan( n, FFTW_BACKWARD, FFTW_ESTIMATE );
+  ip = fftw_plan_dft_1d( n, in, out, FFTW_BACKWARD, flags );
 
   if (ip) {
     t3 = -MPI_Wtime();
-    HPCC_fftw_one( ip, out, in );
+    //HPCC_fftw_one( ip, out, in );
+    fftw_execute(p);  // TODO(HIGH): might be incompatible with non-FFTW code
     t3 += MPI_Wtime();
 
-    HPCC_fftw_destroy_plan( ip );
+    //HPCC_fftw_destroy_plan( ip );
+    fftw_destroy_plan(ip);
   }
 
   HPCC_bcnrand( 2*(s64Int)n, 0, out ); /* regenerate data */

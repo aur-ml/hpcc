@@ -1,5 +1,5 @@
 #ifdef USING_FFTW
-#include <fftw_mpi.h>
+#include <fftw3-mpi.h>
 #else
 #include <mpi.h>
 typedef struct hpcc_fftw_mpi_plan_struct *fftw_mpi_plan;

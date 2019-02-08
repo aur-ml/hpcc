@@ -1,7 +1,16 @@
 
 #ifdef USING_FFTW
 
-#include <fftw.h>
+
+// This typedef should precede fftw include.
+typedef enum {
+     FFTW_FORWARD = -1, FFTW_BACKWARD = 1
+} fftw_direction;
+
+//#include <fftw.h>
+#include <fftw3.h>
+
+typedef double fftw_real;
 
 #else
 
@@ -29,12 +38,13 @@ extern hpcc_fftw_plan HPCC_fftw_create_plan(int n, fftw_direction dir, int flags
 extern void HPCC_fftw_destroy_plan(hpcc_fftw_plan plan);
 extern void HPCC_fftw_one(hpcc_fftw_plan plan, fftw_complex *in, fftw_complex *out);
 
-#ifndef USING_FFTW
-
-typedef struct hpcc_fftw_plan_struct *fftw_plan;
 
 #define c_re(c)  ((c)[0])
 #define c_im(c)  ((c)[1])
+
+#ifndef USING_FFTW
+
+typedef struct hpcc_fftw_plan_struct *fftw_plan;
 
 #define fftw_malloc malloc
 #define fftw_free free
