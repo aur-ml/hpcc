@@ -3,3 +3,8 @@
 *.o
 *.pyc
 *.tmp
+
+hpcc
+hpccinf.txt
+hpl/Make.THUNDERX2T99
+hpl/lib/THUNDERX2T99/

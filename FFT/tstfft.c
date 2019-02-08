@@ -71,6 +71,15 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
   fftw_execute(p);
   t2 += MPI_Wtime();
 
+  
+  if (doIO) {
+    fprintf( outFile, "DBG-010\n" );
+    for (i = 0; i < 3; ++i) {
+      fprintf( outFile, "re_in[%d]: %f\n", i,  c_re( in[i] ) );
+      fprintf( outFile, "re_out[%d]: %f\n", i,  c_re( out[i] ) );
+    }
+  }
+
   fftw_destroy_plan(p);
 
   //ip = HPCC_fftw_create_plan( n, FFTW_BACKWARD, FFTW_ESTIMATE );
@@ -79,7 +88,7 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
   if (ip) {
     t3 = -MPI_Wtime();
     //HPCC_fftw_one( ip, out, in );
-    fftw_execute(p);  // TODO(HIGH): might be incompatible with non-FFTW code
+    fftw_execute(ip);  // TODO(HIGH): might be incompatible with non-FFTW code
     t3 += MPI_Wtime();
 
     //HPCC_fftw_destroy_plan( ip );
