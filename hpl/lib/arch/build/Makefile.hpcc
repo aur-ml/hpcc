@@ -44,7 +44,10 @@ OBJS19 = ../../../../src/HPL_slamch.o ../../../../src/noopt.o
 HDEP20 = ../../../../include/hpcc.h ../../../include/hpl.h
 OBJS20 = ../../../../DGEMM/tstdgemm.o ../../../../DGEMM/onecpu.o
 HDEP21 = ../../../../include/hpcc.h ../../../include/hpl.h ../../../../FFT/hpccfft.h ../../../../FFT/wrapfftw.h ../../../../FFT/wrapmpifftw.h
-OBJS21 = ../../../../FFT/bcnrand.o ../../../../FFT/fft235.o ../../../../FFT/zfft1d.o ../../../../FFT/pzfft1d.o ../../../../FFT/onecpu.o ../../../../FFT/tstfft.o ../../../../FFT/wrapfftw.o ../../../../FFT/wrapmpifftw.o ../../../../FFT/mpifft.o
+
+# TODO(HIGH): restore MPIFFT calls
+# OBJS21 = ../../../../FFT/bcnrand.o ../../../../FFT/fft235.o ../../../../FFT/zfft1d.o ../../../../FFT/pzfft1d.o ../../../../FFT/onecpu.o ../../../../FFT/tstfft.o ../../../../FFT/wrapfftw.o ../../../../FFT/wrapmpifftw.o ../../../../FFT/mpifft.o
+OBJS21 = ../../../../FFT/bcnrand.o ../../../../FFT/fft235.o ../../../../FFT/zfft1d.o ../../../../FFT/pzfft1d.o ../../../../FFT/onecpu.o ../../../../FFT/tstfft.o ../../../../FFT/wrapfftw.o ../../../../FFT/wrapmpifftw.o
 
 ../../../../hpcc : $(HPLlib)
 	$(LINKER) $(LINKFLAGS) -o ../../../../hpcc $(HPL_LIBS)

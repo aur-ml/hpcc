@@ -236,7 +236,7 @@ main(int argc, char *argv[]) {
   fprintf( outputFile, "Begin of MPIFFT section.\n" );
   END_IO( myRank, outputFile );
 
-  if (params.RunMPIFFT) HPCC_MPIFFT( &params );
+  //if (params.RunMPIFFT) HPCC_MPIFFT( &params );  TODO(HIGH): return MPIFFT functionality
 
   time( &currentTime );
   BEGIN_IO( myRank, outFname, outputFile);
