@@ -53,6 +53,14 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
   HPCC_bcnrand( 2*(s64Int)n, 0, in );
   t0 += MPI_Wtime();
 
+  if (doIO) {
+    fprintf( outFile, "DBG-002\n" );
+    for (i = 0; i < 3; ++i) {
+      fprintf( outFile, "re_in[%d]: %f\n", i,  c_re( in[i] ) );
+      fprintf( outFile, "re_out[%d]: %f\n", i,  c_re( out[i] ) );
+    }
+  }
+
 #ifdef HPCC_FFTW_ESTIMATE
   flags = FFTW_ESTIMATE;
 #else
@@ -94,6 +102,15 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
     //HPCC_fftw_destroy_plan( ip );
     fftw_destroy_plan(ip);
   }
+
+  if (doIO) {
+    fprintf( outFile, "DBG-020\n" );
+    for (i = 0; i < 3; ++i) {
+      fprintf( outFile, "re_in[%d]: %f\n", i,  c_re( in[i] ) );
+      fprintf( outFile, "re_out[%d]: %f\n", i,  c_re( out[i] ) );
+    }
+  }
+
 
   HPCC_bcnrand( 2*(s64Int)n, 0, out ); /* regenerate data */
   maxErr = 0.0;
