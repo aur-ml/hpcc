@@ -69,10 +69,13 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
 
   t1 = -MPI_Wtime();
   //p = fftw_create_plan( n, FFTW_FORWARD, flags );
-  p = fftw_plan_dft_1d( n, in, out, FFTW_FORWARD, FFTW_MEASURE );
+  p = fftw_plan_dft_1d( n, in, out, FFTW_FORWARD, flags );
   t1 += MPI_Wtime();
 
   if (! p) goto comp_end;
+
+  // Restore the 'in' data, as it might be altered by the planner in some modes
+  HPCC_bcnrand( 2*(s64Int)n, 0, in );
 
   t2 = -MPI_Wtime();
   //fftw_one( p, in, out );
@@ -91,7 +94,7 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
   fftw_destroy_plan(p);
 
   //ip = HPCC_fftw_create_plan( n, FFTW_BACKWARD, FFTW_ESTIMATE );
-  ip = fftw_plan_dft_1d( n, in, out, FFTW_BACKWARD, FFTW_MEASURE );
+  ip = fftw_plan_dft_1d( n, out, in, FFTW_BACKWARD, FFTW_ESTIMATE );
 
   if (ip) {
     t3 = -MPI_Wtime();
@@ -115,8 +118,8 @@ TestFFT1(HPCC_Params *params, int doIO, FILE *outFile, double *UGflops, int *Un,
   HPCC_bcnrand( 2*(s64Int)n, 0, out ); /* regenerate data */
   maxErr = 0.0;
   for (i = 0; i < n; i++) {
-    tmp1 = c_re( in[i] ) - c_re( out[i] );
-    tmp2 = c_im( in[i] ) - c_im( out[i] );
+    tmp1 = c_re( in[i] ) / n - c_re( out[i] );
+    tmp2 = c_im( in[i] ) / n - c_im( out[i] );
     tmp3 = sqrt( tmp1*tmp1 + tmp2*tmp2 );
     maxErr = maxErr >= tmp3 ? maxErr : tmp3;
   }
