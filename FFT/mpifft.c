@@ -9,6 +9,17 @@
 
 double *HPCC_fft_timings_forward, *HPCC_fft_timings_backward;
 
+// TODO(HIGH): debug
+#define DUMP_SIZE 3
+void dump_data_head_mpi(char* at, int mpi_rank, fftw_complex* signal, fftw_complex* result) {
+    long long int i;
+    printf("Dump of data for rank %d at %s\n", mpi_rank, at);
+    for (i = 0; i < DUMP_SIZE; ++i) {
+        printf("Sig[%d]: re:%f im:%f\n", i, c_re( signal[i] ), c_im( signal[i] ));
+        printf("Res[%d]: re:%f im:%f\n", i, c_re( result[i] ), c_im( result[i] ));
+    }
+}
+
 static void
 MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
         double *UGflops, s64Int_t *Un, double *UmaxErr, int *Ufailure) {
@@ -96,6 +107,11 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
   alocn = local_no;
   aloc0 = local_o_start;
   tls = alloc_local;
+
+  // DEBUG
+  if (commRank == 0)
+    printf("locn,loc0,alocn,aloc0,tls: %d %d %d %d %d\n", locn, loc0, alocn, aloc0, tls);
+
 #else
   fftw_mpi_local_sizes( p, &locn, &loc0, &alocn, &aloc0, &tls );
 #endif
@@ -119,7 +135,7 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
 #pragma omp parallel for
   for (i = 0; i < tls; ++i) {
     c_re( inout[i] ) = c_re( work[i] ) = 0.0;
-    c_re( inout[i] ) = c_im( work[i] ) = 0.0;
+    c_im( inout[i] ) = c_im( work[i] ) = 0.0;
   }
 #endif
 
@@ -127,10 +143,27 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
   HPCC_bcnrand( 2 * tls, 53 * commRank * 2 * tls, inout );
   t0 += MPI_Wtime();
 
+  // Debug
+  if (commRank == 0)
+    dump_data_head_mpi("Before FWD", commRank, inout, work);
+
   t2 = -MPI_Wtime();
   //fftw_mpi( p, 1, inout, work );
   fftw_execute(p);
   t2 += MPI_Wtime();
+
+  // Debug
+  if (commRank == 0)
+    dump_data_head_mpi("After FWD", commRank, inout, work);
+
+  for (i = 0; i < tls; ++i) {
+    c_re( inout[i] ) = c_re( work[i] );
+    c_im( inout[i] ) = c_im( work[i] );
+  }
+
+  // Debug
+  if (commRank == 0)
+    dump_data_head_mpi("After copy", commRank, inout, work);
 
   //fftw_mpi_destroy_plan( p );
   fftw_destroy_plan(p);
@@ -144,6 +177,10 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
 
     HPCC_fftw_mpi_destroy_plan( ip );
   }
+
+  // Debug
+  if (commRank == 0)
+    dump_data_head_mpi("After BCK", commRank, inout, work);
 
   HPCC_bcnrand( 2 * tls, 53 * commRank * 2 * tls, work ); /* regenerate data */
 
