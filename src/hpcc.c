@@ -5,6 +5,8 @@
 
 #include <hpcc.h>
 #include <ctype.h>
+// NEW 2019-02
+#include <fftw3-mpi.h>
 
 int
 main(int argc, char *argv[]) {
@@ -16,6 +18,9 @@ main(int argc, char *argv[]) {
   void *extdata;
 
   MPI_Init( &argc, &argv );
+
+  // NEW 2019-02
+  fftw_mpi_init();
 
   if (HPCC_external_init( argc, argv, &extdata ))
     goto hpcc_end;
@@ -236,7 +241,7 @@ main(int argc, char *argv[]) {
   fprintf( outputFile, "Begin of MPIFFT section.\n" );
   END_IO( myRank, outputFile );
 
-  //if (params.RunMPIFFT) HPCC_MPIFFT( &params );  TODO(HIGH): return MPIFFT functionality
+  if (params.RunMPIFFT) HPCC_MPIFFT( &params );
 
   time( &currentTime );
   BEGIN_IO( myRank, outFname, outputFile);
@@ -319,6 +324,9 @@ main(int argc, char *argv[]) {
   HPCC_Finalize( &params );
 
   HPCC_external_finalize( argc, argv, extdata );
+
+  // NEW 2019-02
+  fftw_mpi_cleanup();
 
   MPI_Finalize();
   return 0;

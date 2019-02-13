@@ -18,11 +18,13 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
   double maxErr, tmp1, tmp2, tmp3, t0, t1, t2, t3, Gflops;
   double deps;
   fftw_complex *inout, *work;
-  fftw_mpi_plan p;
+  //fftw_mpi_plan p;
+  fftw_plan p;
   hpcc_fftw_mpi_plan ip;
   int sAbort, rAbort;
 #ifdef USING_FFTW
-  int ilocn, iloc0, ialocn, ialoc0, itls;
+  //int ilocn, iloc0, ialocn, ialoc0, itls;
+  ptrdiff_t alloc_local, local_ni, local_i_start, local_no, local_o_start;
 #endif
 
   failure = 1;
@@ -60,30 +62,53 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
 #endif
 
   t1 = -MPI_Wtime();
-  p = fftw_mpi_create_plan( comm, n, FFTW_FORWARD, flags );
+  //p = fftw_mpi_create_plan( comm, n, FFTW_FORWARD, flags );
+
+  // NEW 2019-02:
+  alloc_local = fftw_mpi_local_size_1d(n, comm, FFTW_FORWARD, flags,
+                                                  &local_ni, &local_i_start, &local_no, &local_o_start);
+  //data = fftw_alloc_complex(alloc_local);
+  inout = fftw_alloc_complex(alloc_local);
+  //dataOut = fftw_alloc_complex(alloc_local);
+  work = fftw_alloc_complex(alloc_local);
+  //data2 = fftw_alloc_complex(alloc_local);
+  
+  /* create plan  */
+  //p = fftw_mpi_plan_dft_1d(n, data, data2, MPI_COMM_WORLD,
+  p = fftw_mpi_plan_dft_1d(n, inout, work, comm,
+                                         FFTW_FORWARD, flags);
+
   t1 += MPI_Wtime();
 
   if (! p) goto no_plan;
 
 #ifdef USING_FFTW
+  /*
   fftw_mpi_local_sizes( p, &ilocn, &iloc0, &ialocn, &ialoc0, &itls );
   locn = ilocn;
   loc0 = iloc0;
   alocn = ialocn;
   aloc0 = ialoc0;
   tls = itls;
+  */
+  locn = local_ni;
+  loc0 = local_i_start;
+  alocn = local_no;
+  aloc0 = local_o_start;
+  tls = alloc_local;
 #else
   fftw_mpi_local_sizes( p, &locn, &loc0, &alocn, &aloc0, &tls );
 #endif
 
-  inout = (fftw_complex *)HPCC_fftw_malloc( tls * (sizeof *inout) );
-  work  = (fftw_complex *)HPCC_fftw_malloc( tls * (sizeof *work) );
+  //inout = (fftw_complex *)HPCC_fftw_malloc( tls * (sizeof *inout) );
+  //work  = (fftw_complex *)HPCC_fftw_malloc( tls * (sizeof *work) );
 
   sAbort = 0;
   if (! inout || ! work) sAbort = 1;
   MPI_Allreduce( &sAbort, &rAbort, 1, MPI_INT, MPI_SUM, comm );
   if (rAbort > 0) {
-    fftw_mpi_destroy_plan( p );
+    //fftw_mpi_destroy_plan( p );
+    fftw_destroy_plan(p);
     goto comp_end;
   }
 
@@ -103,10 +128,12 @@ MPIFFT0(HPCC_Params *params, int doIO, FILE *outFile, MPI_Comm comm, int locN,
   t0 += MPI_Wtime();
 
   t2 = -MPI_Wtime();
-  fftw_mpi( p, 1, inout, work );
+  //fftw_mpi( p, 1, inout, work );
+  fftw_execute(p);
   t2 += MPI_Wtime();
 
-  fftw_mpi_destroy_plan( p );
+  //fftw_mpi_destroy_plan( p );
+  fftw_destroy_plan(p);
 
   ip = HPCC_fftw_mpi_create_plan( comm, n, FFTW_BACKWARD, FFTW_ESTIMATE );
 
